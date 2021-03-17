@@ -23,7 +23,7 @@ def _parse(args):
 def suggestions_to_csv(suggestions, users, outfile, sample):
     """
     formats a csv containing suggestions for each method for
-    human evaluation. The output should be of the form:
+    human evaluation, given the users to eval.
     """
     
     dataset = []
@@ -77,12 +77,3 @@ parser.add_argument("-n", help="wordsA sample size (default: 100)", type=int, de
 
 # cals the parser
 _parse(parser.parse_args())
-
-# 0 ok
-# 1 ok
-# 2 fazer
-# 3 ok nao fazer
-# 5 fazer
-# 6 fazer
-# 7 não
-# 8 não

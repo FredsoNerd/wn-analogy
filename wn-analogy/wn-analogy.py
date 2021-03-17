@@ -30,8 +30,8 @@ def apply_method_analogy(embs, dataset):
         # saves to files
         filename = "resultados_{}.json".format(method)
         logger.info("Save JSON... {}".format(filename))
-        with open(filename) as outfile:
-            json.dump(result, outfile,indent=4, ensure_ascii=False)
+        with open(filename, "w+") as outfile:
+            json.dump(result, outfile, indent=4, ensure_ascii=False)
 
 
 # sets parser and interface function
