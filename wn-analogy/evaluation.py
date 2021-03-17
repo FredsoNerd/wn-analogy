@@ -31,12 +31,14 @@ def suggestions_to_csv(suggestions, users, outfile, sample):
     for s in suggestions:
         details = s["details"]
         methods = s["experiment_setup"]["method"]
+        relation = s["experiment_setup"]["subcategory"].split(".")[0]
 
         # formats the data
         dataset += [{
             "wordA": detail["b"],
             "wordB": prediction["answer"],
             "method": methods,
+            "relation": relation,
             "hit": prediction["hit"]
             }
             for detail in details
@@ -49,7 +51,7 @@ def suggestions_to_csv(suggestions, users, outfile, sample):
     data_df = data_df.join(dummies)
     # group and aggregate
     aggregation = {col:"sum" for col in dummies.columns}
-    data_df = data_df.groupby(["wordA","wordB", "hit"]).agg(aggregation)
+    data_df = data_df.groupby(["wordA","wordB", "relation", "hit"]).agg(aggregation)
     data_df = data_df.reset_index()
 
     # adds users to vote
@@ -75,3 +77,12 @@ parser.add_argument("-n", help="wordsA sample size (default: 100)", type=int, de
 
 # cals the parser
 _parse(parser.parse_args())
+
+# 0 ok
+# 1 ok
+# 2 fazer
+# 3 ok nao fazer
+# 5 fazer
+# 6 fazer
+# 7 não
+# 8 não
