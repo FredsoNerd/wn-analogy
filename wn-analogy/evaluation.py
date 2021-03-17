@@ -7,8 +7,9 @@ import argparse
 
 def _parse(args):
     users = args.u
+    sample = args.n
     outfile = args.o
-    filenames = args.f  
+    filenames = args.f
     
     suggestions = []
     for filename in filenames:
@@ -17,9 +18,9 @@ def _parse(args):
             # suggestions.append(json.load(file)[0])
     
     # cals main function
-    suggestions_to_csv(suggestions, users, outfile)
+    suggestions_to_csv(suggestions, users, outfile, sample)
 
-def suggestions_to_csv(suggestions, users, outfile):
+def suggestions_to_csv(suggestions, users, outfile, sample):
     """
     formats a csv containing suggestions for each method for
     human evaluation. The output should be of the form:
@@ -35,7 +36,8 @@ def suggestions_to_csv(suggestions, users, outfile):
         dataset += [{
             "wordA": detail["b"],
             "wordB": prediction["answer"],
-            "method": methods
+            "method": methods,
+            "hit": prediction["hit"]
             }
             for detail in details
             for prediction in detail["predictions"]]
@@ -47,13 +49,18 @@ def suggestions_to_csv(suggestions, users, outfile):
     data_df = data_df.join(dummies)
     # group and aggregate
     aggregation = {col:"sum" for col in dummies.columns}
-    data_df = data_df.groupby(["wordA","wordB"]).agg(aggregation)
+    data_df = data_df.groupby(["wordA","wordB", "hit"]).agg(aggregation)
     data_df = data_df.reset_index()
 
     # adds users to vote
-    for user in users:  data_df[user] = 0
-    print(data_df)
+    for user in users: data_df[user] = 0
 
+    # shoses a sample
+    words = data_df["wordA"].drop_duplicates().sample(sample)
+    data_df = data_df[data_df.wordA.isin(words)].reset_index()
+
+    # saves and shows output
+    print(data_df)
     data_df.to_csv(outfile)
     
 
@@ -64,6 +71,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-f", help="dataset files", nargs="+")
 parser.add_argument("-u", help="users to vote", nargs="+")
 parser.add_argument("-o", help="output filename (default: output.csv)", default="output.csv")
+parser.add_argument("-n", help="wordsA sample size (default: 100)", type=int, default=100)
 
 # cals the parser
 _parse(parser.parse_args())
