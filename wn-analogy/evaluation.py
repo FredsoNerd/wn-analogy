@@ -30,14 +30,12 @@ def suggestions_to_csv(suggestions, users, outfile):
     for s in suggestions:
         details = s["details"]
         methods = s["experiment_setup"]["method"]
-        fromfile = s["experiment_setup"]["subcategory"]
 
         # formats the data
         dataset += [{
             "wordA": detail["b"],
             "wordB": prediction["answer"],
-            "method": methods,
-            "fromfile": fromfile
+            "method": methods
             }
             for detail in details
             for prediction in detail["predictions"]]
@@ -49,7 +47,7 @@ def suggestions_to_csv(suggestions, users, outfile):
     data_df = data_df.join(dummies)
     # group and aggregate
     aggregation = {col:"sum" for col in dummies.columns}
-    data_df = data_df.groupby(["wordA","wordB","fromfile"]).agg(aggregation)
+    data_df = data_df.groupby(["wordA","wordB"]).agg(aggregation)
     data_df = data_df.reset_index()
 
     # adds users to vote
@@ -65,7 +63,7 @@ parser = argparse.ArgumentParser()
 # sets the user options
 parser.add_argument("-f", help="dataset files", nargs="+")
 parser.add_argument("-u", help="users to vote", nargs="+")
-parser.add_argument("-o", help="output filename (default: out.csv)", default="out.csv")
+parser.add_argument("-o", help="output filename (default: output.csv)", default="output.csv")
 
 # cals the parser
 _parse(parser.parse_args())
