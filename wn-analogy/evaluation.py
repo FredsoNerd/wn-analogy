@@ -69,8 +69,10 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
 
                 data = dict()
                 data["hit"] = ishit
-                data["wordA"] = lemmaA
-                data["wordB"] = lemmaB
+                data["wordA"] = wordA
+                data["wordB"] = wordB
+                data["lemmaA"] = lemmaA
+                data["lemmaB"] = lemmaB
                 data["method"] = methods
                 data["relation"] = relation
                 dataset.append(data) 
@@ -82,15 +84,15 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
     data_df = data_df.join(dummies)
     # group and aggregate
     aggregation = {col:"sum" for col in dummies.columns}
-    data_df = data_df.groupby(["wordA","wordB", "relation", "hit"]).agg(aggregation)
+    data_df = data_df.groupby(["wordA","wordB","lemmaA","lemmaB","relation","hit"]).agg(aggregation)
     data_df = data_df.reset_index()
 
     # adds users to vote
     for user in users: data_df[user] = 0
 
-    # shoses a sample
-    words = data_df["wordA"].drop_duplicates().sample(sample)
-    data_df = data_df[data_df.wordA.isin(words)].reset_index()
+    # shoses a sample for each relation
+    word_rel_sample = data_df[["wordA","relation"]].drop_duplicates().sample(sample)
+    data_df = data_df[data_df.wordA.isin(word_rel_sample.wordA) & data_df.relation.isin(word_rel_sample.relation)].reset_index()
 
     # saves and shows output
     logger.info(f"saving output to file {outfile}")
