@@ -48,9 +48,9 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
 
     for s in suggestions:
         details = s["details"]
-        methods = s["experiment_setup"]["method"]
+        method = s["experiment_setup"]["method"]
         relation = s["experiment_setup"]["subcategory"].split(".")[0]
-        logger.debug(f"structuring details from {methods}-{relation}")
+        logger.debug(f"structuring details from {method}-{relation}")
 
         # filters by relations, if given
         if relations and relation not in relations:
@@ -78,12 +78,13 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
                 data["valid"] = valid
                 data["lemmaA"] = lemmaA
                 data["lemmaB"] = lemmaB
-                data["method"] = methods
+                data["method"] = method
                 data["relation"] = relation
                 dataset.append(data) 
          
     # formats data as dataframe and add dummies
     data_df = pd.DataFrame(dataset)
+    methods = list(data_df["method"].drop_duplicates())
     dummies = pd.get_dummies(data_df["method"])
     data_df = data_df.drop("method", axis=1)
     data_df = data_df.join(dummies)
@@ -101,9 +102,14 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
     # adds users to vote
     for user in users: data_df[user] = 0
 
-    # shoses a sample for each relation
+    # choses a sample for each relation
     word_rel_sample = data_df[["wordA","relation"]].drop_duplicates().sample(sample)
     data_df = data_df[data_df.wordA.isin(word_rel_sample.wordA) & data_df.relation.isin(word_rel_sample.relation)]
+
+    # ordering colums
+    ordered  = ["wordA","lemmaA","posA","wordB","lemmaB","posB"]
+    ordered += ["relation","hit","valid"] + methods + users
+    data_df = data_df.reindex(columns=ordered)
 
     # saves and shows output
     logger.info(f"saving output to file {outfile}")
