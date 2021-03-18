@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import json
 import pandas as pd
 
@@ -15,7 +16,9 @@ def _parse(args):
     filenames = args.f
     relations = args.r
     verbosity = args.v
-    morphobrfiles = args.m
+    
+    morphobrpath = args.m
+    morphobrfiles = _find_files(morphobrpath, ".dict") if morphobrpath else []
 
     # sets verbosity level
     logging.basicConfig(level= 30-10*verbosity)
@@ -61,14 +64,16 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
                 wordB = prediction["answer"]
                 
                 # filters by form-lemma, if given
-                valid,lemmaA,lemmaB = _validate_relation(relation,wordA,wordB,form_lemma_dict)
+                valid,posA,lemmaA,posB,lemmaB = _validate_relation(relation,wordA,wordB,form_lemma_dict)
                 # ## ignores if not in the morphobr
                 # if form_lemma_dict and not valid:
                 #     continue
 
                 data = dict()
                 data["hit"] = ishit
+                data["posA"] = posA
                 data["wordA"] = wordA
+                data["posB"] = posB
                 data["wordB"] = wordB
                 data["valid"] = valid
                 data["lemmaA"] = lemmaA
@@ -86,7 +91,9 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
     aggregation = {col:"sum" for col in dummies.columns}
     aggregation["hit"] = "min"
     aggregation["valid"] = "min"
+    aggregation["posA"] = "min"
     aggregation["lemmaA"] = "min"
+    aggregation["posB"] = "min"
     aggregation["lemmaB"] = "min"
     data_df = data_df.groupby(["wordA","wordB","relation"]).agg(aggregation)
     data_df = data_df.reset_index()
@@ -122,13 +129,18 @@ def _read_from_dicts(filenames):
 
     return form_lemma_dict
 
+def _find_files(path, extension):
+    found = []
+    for root, _, files in os.walk(path):
+        found += [os.path.join(root,f) for f in files if f.endswith(extension)]
+    return found
 
 def _validate_relation(relation, wordA, wordB, form_lemma_dict):
     relation,typeA,typeB = relation.split("-")
     relation = relation.split("_")[-1]
 
-    lemmaA = _get_lemma(form_lemma_dict, wordB, typeB)
-    lemmaB = _get_lemma(form_lemma_dict, wordB, typeB)
+    posA,lemmaA = _get_lemma(form_lemma_dict, wordB, typeB)
+    posB,lemmaB = _get_lemma(form_lemma_dict, wordB, typeB)
 
     domain = _domain_range_map[relation]["domain"]
     _range = _domain_range_map[relation]["range"]
@@ -141,21 +153,21 @@ def _validate_relation(relation, wordA, wordB, form_lemma_dict):
     if typeA == "CoreConcept":
         #search a valid type for the relation
         for typeA in domain:
-            lemmaA = _get_lemma(form_lemma_dict, wordA, typeA)
+            posA,lemmaA = _get_lemma(form_lemma_dict, wordA, typeA)
             if lemmaA and lemmaB and typeB in _range:
-                return True, lemmaA, lemmaB
+                return True,posA,lemmaA,posB,lemmaB
     
-    return False, lemmaA, lemmaB
+    return False,posA,lemmaA,posB,lemmaB
      
 
 def _get_lemma(form_lemma_dict, word, type):
     try:
-        if type == "NounSynset": return form_lemma_dict[word]["N"]
-        if type == "VerbSynset": return form_lemma_dict[word]["V"]
-        if type == "AdverbSynset": return form_lemma_dict[word]["ADV"]
-        if type == "AdjectiveSynset": return form_lemma_dict[word]["A"]
+        if type == "NounSynset": return "N",form_lemma_dict[word]["N"]
+        if type == "VerbSynset": return "V",form_lemma_dict[word]["V"]
+        if type == "AdverbSynset": return "ADV",form_lemma_dict[word]["ADV"]
+        if type == "AdjectiveSynset": return "A",form_lemma_dict[word]["A"]
     except:
-        return None
+        return None,None
 
 
 _domain_range_map = {
@@ -205,7 +217,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-f", help="dataset files", nargs="+")
 parser.add_argument("-u", help="users to vote", nargs="+")
 parser.add_argument("-n", help="words sample size (default value: 10)", type=int, default=10)
-parser.add_argument("-m", help="MorphoBR dict files (no filters if none)", nargs="*", default=[])
+parser.add_argument("-m", help="path to MorphoBR (no filters if none)", default="")
 parser.add_argument("-r", help="relations to filter (no filters if none)", nargs="*", default=[])
 parser.add_argument("-o", help="output filename (default value: output.csv)", default="output.csv")
 
