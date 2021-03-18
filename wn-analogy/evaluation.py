@@ -111,6 +111,9 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
     ordered += ["relation","hit","valid"] + methods + users
     data_df = data_df.reindex(columns=ordered)
 
+    # sets users votes as ZERO
+    data_df.loc[data_df.valid == False, users] = "ZERO"    
+
     # saves and shows output
     logger.info(f"saving output to file {outfile}")
     logger.info(f"output table \n {data_df}")
