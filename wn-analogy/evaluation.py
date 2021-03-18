@@ -18,7 +18,7 @@ def _parse(args):
     verbosity = args.v
     
     morphobrpath = args.m
-    morphobrfiles = _find_files(morphobrpath, ".dict") if morphobrpath else []
+    morphobrfiles = _find_files(morphobrpath, ".dict")
 
     # sets verbosity level
     logging.basicConfig(level= 30-10*verbosity)
@@ -138,10 +138,15 @@ def _read_from_dicts(filenames):
 
     return form_lemma_dict
 
-def _find_files(path, extension):
+def _find_files(filepaths, extension):
     found = []
-    for root, _, files in os.walk(path):
-        found += [os.path.join(root,f) for f in files if f.endswith(extension)]
+    for filepath in filepaths:
+        if os.path.isdir(filepath):
+            for root, _, files in os.walk(filepath):
+                found += [os.path.join(root,f) for f in files if f.endswith(extension)]
+        elif os.path.isfile(filepath) and filepath.endswith(extension):
+            found.append(filepath)
+    
     return found
 
 def _validate_relation(relation, wordA, wordB, form_lemma_dict):
@@ -226,7 +231,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-f", help="dataset files", nargs="+")
 parser.add_argument("-u", help="users to vote", nargs="+")
 parser.add_argument("-n", help="words sample size (default value: 10)", type=int, default=10)
-parser.add_argument("-m", help="path to MorphoBR (no filters if none)", default="")
+parser.add_argument("-m", help="dict filepaths (no filters if none)", nargs="*", default=[])
 parser.add_argument("-r", help="relations to filter (no filters if none)", nargs="*", default=[])
 parser.add_argument("-o", help="output filename (default value: output.csv)", default="output.csv")
 
