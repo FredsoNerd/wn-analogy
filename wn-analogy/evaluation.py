@@ -66,14 +66,11 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
                 ## ignores if not in the morphobr
                 if form_lemma_dict and (not lemmaA or not lemmaB):
                     continue
-                # if form_lemma_dict and lemmaA == lemmaB:
-                #     logger.debug(f"got the same lemma {wordA} {wordB}, on relation {relation}.")
-                #     continue
 
                 data = dict()
                 data["hit"] = ishit
-                data["wordA"] = wordA
-                data["wordB"] = wordB
+                data["wordA"] = lemmaA
+                data["wordB"] = lemmaB
                 data["method"] = methods
                 data["relation"] = relation
                 dataset.append(data) 
