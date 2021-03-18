@@ -99,9 +99,6 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
     data_df = data_df.groupby(["wordA","wordB","relation"]).agg(aggregation)
     data_df = data_df.reset_index()
 
-    # adds users to vote
-    for user in users: data_df[user] = 0
-
     # choses a sample for each relation
     word_rel_sample = data_df[["wordA","relation"]].drop_duplicates().sample(sample)
     data_df = data_df[data_df.wordA.isin(word_rel_sample.wordA) & data_df.relation.isin(word_rel_sample.relation)]
@@ -111,8 +108,8 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
     ordered += ["relation","hit","valid"] + methods + users
     data_df = data_df.reindex(columns=ordered)
 
-    # sets users votes as ZERO
-    data_df.loc[data_df.valid == False, users] = "ZERO"    
+    # sets users votes as
+    data_df.loc[data_df.valid == False, users] = 0    
 
     # saves and shows output
     logger.info(f"saving output to file {outfile}")
