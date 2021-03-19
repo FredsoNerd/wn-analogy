@@ -38,7 +38,7 @@ def _parse(args):
     # cals main function
     suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemma_dict)
 
-def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemma_dict):
+def suggestions_to_csv(suggestions, users, outfile, sample_size, relations, form_lemma_dict):
     """
     formats a csv containing suggestions for each method for
     human evaluation, given the users to eval.
@@ -100,13 +100,21 @@ def suggestions_to_csv(suggestions, users, outfile, sample, relations, form_lemm
     data_df = data_df.reset_index()
 
     # choses a sample for each relation
-    word_rel_sample = data_df[["wordA","relation"]].drop_duplicates().sample(sample)
-    data_df = data_df[data_df.wordA.isin(word_rel_sample.wordA) & data_df.relation.isin(word_rel_sample.relation)]
+    wrsample = data_df[["wordA","relation"]].drop_duplicates()
+    wrsample = wrsample.groupby("relation").sample(sample_size)
+    logger.debug(f"sample table for relation\n {wrsample}")
+    
+    wrsample["aux"] = wrsample["wordA"] + wrsample["relation"]
+    data_df["aux"] =  data_df["wordA"] + data_df["relation"]
+    data_df = data_df[data_df["aux"].isin(wrsample["aux"])]
 
     # ordering colums
     ordered  = ["wordA","lemmaA","posA","wordB","lemmaB","posB"]
     ordered += ["relation","hit","valid"] + methods + users
     data_df = data_df.reindex(columns=ordered)
+
+    # ordering by relations
+    data_df = data_df.sort_values(by=["relation","wordA","wordB"])
 
     # sets users votes as
     data_df.loc[data_df.valid == False, users] = 0    
@@ -130,8 +138,15 @@ def _read_from_dicts(filenames):
                 # pos in one of N,V,A,ADV
                 pos = metadata.split("+")[1].split(".")[0]
                 
-                try: form_lemma_dict[form][pos] = lemma
-                except: form_lemma_dict[form] = {pos:lemma}
+                if form in form_lemma_dict.keys():
+                    if pos in form_lemma_dict[form].keys():
+                        lemmas = form_lemma_dict[form][pos].split("/")
+                        lemmas += [lemma] if lemma not in lemmas else []
+                        form_lemma_dict[form][pos] = "/".join(lemmas)
+                    else:
+                        form_lemma_dict[form][pos] = lemma
+                else:
+                    form_lemma_dict[form] = {pos:lemma}
 
     return form_lemma_dict
 
@@ -153,21 +168,25 @@ def _validate_relation(relation, wordA, wordB, form_lemma_dict):
     posA,lemmaA = _get_lemma(form_lemma_dict, wordB, typeB)
     posB,lemmaB = _get_lemma(form_lemma_dict, wordB, typeB)
 
-    domain = _domain_range_map[relation]["domain"]
-    _range = _domain_range_map[relation]["range"]
+    domain = _relations[relation]["domain"]
+    _range = _relations[relation]["range"]
 
-    # if valid relation and both lemmas exist
-    if lemmaA and lemmaB and typeA in domain and typeB in _range:
-        return True, lemmaA, lemmaB
+    # if valid relation and both lemmas exist and are different
+    if lemmaA != lemmaB and lemmaA and lemmaB and typeA in domain and typeB in _range:
+        return True,posA,lemmaA,posB,lemmaB
 
     # case typeA is CoreConcept checks all domain
     if typeA == "CoreConcept":
         #search a valid type for the relation
         for typeA in domain:
             posA,lemmaA = _get_lemma(form_lemma_dict, wordA, typeA)
-            if lemmaA and lemmaB and typeB in _range:
+            if lemmaA != lemmaB and lemmaA and lemmaB and typeB in _range:
                 return True,posA,lemmaA,posB,lemmaB
     
+    # not valid relation if
+    # lemas are the same
+    # one lemma doesnt exist
+    # pos not valid for relation
     return False,posA,lemmaA,posB,lemmaB
      
 
@@ -181,7 +200,7 @@ def _get_lemma(form_lemma_dict, word, type):
         return None,None
 
 
-_domain_range_map = {
+_relations = {
     'attribute': {
         'domain': ['NounSynset'],
         'range': ['AdjectiveSynset']},
@@ -236,3 +255,6 @@ parser.add_argument("-v", help="increase verbosity (example: -vv for debugging)"
 
 # cals the parser
 _parse(parser.parse_args())
+
+
+# templates de relação
