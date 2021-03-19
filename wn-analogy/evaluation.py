@@ -194,30 +194,30 @@ _domain_range_map = {
     'antonymOf': {
         'domain': ["AdjectiveSynset"], 
         'range': ["AdjectiveSynset"]},
-    # 'entails': {
-    #     'domain': ['VerbSynset'],
-    #     'range': ['VerbSynset']},
-    # 'memberHolonymOf': {
-    #     'domain': ['NounSynset'], 
-    #     'range': ['NounSynset']},
-    # 'memberMeronymOf': {
-    #     'domain': ['NounSynset'], 
-    #     'range': ['NounSynset']},
-    # 'partMeronymOf': {
-    #     'domain': ['NounSynset'], 
-    #     'range': ['NounSynset']},
-    # 'substanceHolonymOf': {
-    #     'domain': ['NounSynset'], 
-    #     'range': ['NounSynset']},
-    # 'substanceMeronymOf': {
-    #     'domain': ['NounSynset'], 
-    #     'range': ['NounSynset']},
-    # 'agent': {
-    #     'domain': ['VerbSynset'], 
-    #     'range': ['NounSynset']},
-    # 'byMeansOf': {
-    #     'domain': ['VerbSynset'], 
-    #     'range': ['NounSynset']}
+    'entails': {
+        'domain': ['VerbSynset'],
+        'range': ['VerbSynset']},
+    'memberHolonymOf': {
+        'domain': ['NounSynset'], 
+        'range': ['NounSynset']},
+    'memberMeronymOf': {
+        'domain': ['NounSynset'], 
+        'range': ['NounSynset']},
+    'partMeronymOf': {
+        'domain': ['NounSynset'], 
+        'range': ['NounSynset']},
+    'substanceHolonymOf': {
+        'domain': ['NounSynset'], 
+        'range': ['NounSynset']},
+    'substanceMeronymOf': {
+        'domain': ['NounSynset'], 
+        'range': ['NounSynset']},
+    'agent': {
+        'domain': ['VerbSynset'], 
+        'range': ['NounSynset']},
+    'byMeansOf': {
+        'domain': ['VerbSynset'], 
+        'range': ['NounSynset']}
     }
 
 
