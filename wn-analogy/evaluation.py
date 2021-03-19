@@ -113,8 +113,13 @@ def suggestions_to_csv(suggestions, users, outfile, sample_size, relations, form
     ordered += ["relation","hit","valid"] + methods + users
     data_df = data_df.reindex(columns=ordered)
 
-    # ordering by relations
+    # ordering by relations and replacing examples
     data_df = data_df.sort_values(by=["relation","wordA","wordB"])
+    data_df["relation"] = data_df["relation"].apply(_get_example)
+
+    # replaces bool to integer
+    data_df["hit"] = data_df["hit"].apply(int)
+    data_df["valid"] = data_df["valid"].apply(int)
 
     # sets users votes as
     data_df.loc[data_df.valid == False, users] = 0    
@@ -199,44 +204,62 @@ def _get_lemma(form_lemma_dict, word, type):
     except:
         return None,None
 
+def _get_example(relation):
+    for key, value in _relations.items():
+        if relation.find(key) >= 0:
+            return value["example"]
+    return key
+
 
 _relations = {
     'attribute': {
         'domain': ['NounSynset'],
-        'range': ['AdjectiveSynset']},
+        'range': ['AdjectiveSynset'],
+        'example': 'attribute X-N Y-A : crânio -> duro'},
     'causes': {
         'domain': ['VerbSynset'],
-        'range': ['VerbSynset']},
+        'range': ['VerbSynset'],
+        'example': 'causes X-V Y-V: derrubar -> cair'},
     'partHolonymOf': {
         'domain': ['NounSynset'], 
-        'range': ['NounSynset']},
+        'range': ['NounSynset'],
+        'example':'partHolonymOf A-N B-N : ancora -> barco'},
     'antonymOf': {
-        'domain': ["AdjectiveSynset"], 
-        'range': ["AdjectiveSynset"]},
+        'domain': ["AdjectiveSynset"],
+        'range': ["AdjectiveSynset"],
+        'example': 'antonymOf X-? Y-? : casado <-> solteiro'},
     'entails': {
         'domain': ['VerbSynset'],
-        'range': ['VerbSynset']},
+        'range': ['VerbSynset'],
+        'example': 'entails X-V Y-V : cantar -> soar'},
     'memberHolonymOf': {
         'domain': ['NounSynset'], 
-        'range': ['NounSynset']},
+        'range': ['NounSynset'],
+        'example': 'memberHolonymOf X-N Y-N : auditor -> audiência'},
     'memberMeronymOf': {
         'domain': ['NounSynset'], 
-        'range': ['NounSynset']},
+        'range': ['NounSynset'],
+        'example':'memberMeronymOf X-N Y-N : audiencia -> auditor'},
     'partMeronymOf': {
         'domain': ['NounSynset'], 
-        'range': ['NounSynset']},
+        'range': ['NounSynset'],
+        'example':'partMeronymOf X-N Y-N : ônibus -> janela'},
     'substanceHolonymOf': {
         'domain': ['NounSynset'], 
-        'range': ['NounSynset']},
+        'range': ['NounSynset'],
+        'example':'substanceHolonymOf X-N Y-N : osso -> chifre'},
     'substanceMeronymOf': {
         'domain': ['NounSynset'], 
-        'range': ['NounSynset']},
+        'range': ['NounSynset'],
+        'example':'substanceHolonymOf X-N Y-N : chifre -> osso'},
     'agent': {
         'domain': ['VerbSynset'], 
-        'range': ['NounSynset']},
+        'range': ['NounSynset'],
+        'example':'substanceHolonymOf X-V Y-N : cantar -> cantor'},
     'byMeansOf': {
         'domain': ['VerbSynset'], 
-        'range': ['NounSynset']}
+        'range': ['NounSynset'],
+        'example':'substanceHolonymOf X-V Y-N : acalmar -> calmante'}
     }
 
 
@@ -255,6 +278,3 @@ parser.add_argument("-v", help="increase verbosity (example: -vv for debugging)"
 
 # cals the parser
 _parse(parser.parse_args())
-
-
-# templates de relação
